@@ -201,6 +201,7 @@ data_age_12_rnn_unique = np.reshape(data_age_12_rnn_unique, (1, data_age_12_rnn_
 print(data_age_12_rnn_unique.shape)
 
 output_age_3 = ["AnyDepression_T2_Imp"]
+#output_age_3 = ["DSMAnxDx_T2"]
 
 for i in range(651):
     group_id.append(data[i][0])
@@ -214,6 +215,7 @@ for i in group_id:
 final_data_age3_output = np.array(np_data_age3_output)
 
 output_age_6 = ["LifeTime_Depression_withNOS_age9"]
+#output_age_6 = ["LifeTime_AnyAnxiety_WithoutNOS_age9"]
 np_data_age6_output = []
 for i in group_id:
     for j in output_age_6:
@@ -224,6 +226,7 @@ for i in group_id:
 final_data_age6_output = np.array(np_data_age6_output)
 
 output_age_9 = ["AnyDepressiveDisorder_includingNOS_12"]
+#output_age_9 = ["AnyAnxiety12"]
 np_data_age9_output = []
 for i in group_id:
     for j in output_age_9:
@@ -268,7 +271,7 @@ input_data = []
 input_data.append(torch.from_numpy(data_age_3_rnn))
 input_data.append(torch.from_numpy(data_age_6_rnn))
 input_data.append(torch.from_numpy(data_age_9_rnn))
-input_data.append(torch.from_numpy(data_age_12_rnn))
+#input_data.append(torch.from_numpy(data_age_12_rnn))
 
 input_data_age3_unique = torch.from_numpy(data_age_3_rnn_unique)
 input_data_age6_unique = torch.from_numpy(data_age_6_rnn_unique)
@@ -302,7 +305,7 @@ X_Unique_age12_train = input_data_age12_unique.flatten(0,1)[:585,:]
 X_Unique_age12_test = input_data_age12_unique.flatten(0,1)[-66:,:]
 Y_train = Y[:585,:]
 Y_test = Y[-66:, :]
-model = rnn_model.RNNModel(X_train.shape[2], X_train.shape[1],128, 4, 2, X_train.shape[0])
+model = rnn_model.RNNModel(X_train.shape[2], X_train.shape[1],256, 4, 2, X_train.shape[0])
 model = model.to(device)
 print(model)
 num_epochs = 100

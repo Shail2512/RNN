@@ -15,7 +15,9 @@ class RNNModel(torch.nn.Module):
         self.rnn = torch.nn.RNN(input_dim, hidden_size=self.hidden_size, num_layers=self.num_layers, batch_first=False)
         
         # fc layers
-        self.fc = torch.nn.Linear(hidden_dim, 1)
+        self.fc0 = torch.nn.Linear(self.hidden_size, 128)
+        self.fc1 = torch.nn.Linear(128, 16)
+        self.fc2 = torch.nn.Linear(16, 1)
         #self.fcFinal = torch.nn.Linear(hidden_dim, 4)
         self.fc3 = torch.nn.Linear(10, 1)
         self.fc6 = torch.nn.Linear(3, 1)
@@ -30,7 +32,9 @@ class RNNModel(torch.nn.Module):
         
         # step through the sequence i.e. for each wave
         output, hn = self.rnn(inp, hn.cuda())
-        final_out_overall = self.fc(output)
+        hidden1 = self.fc0(output)
+        hidden2 = self.fc1(hidden1)
+        final_out_overall = self.fc2(hidden2)
         final_out_overall = final_out_overall.permute((1,0,2))
         #print("Final Output Shape : ", final_out_overall.shape)
         final_out_overall = final_out_overall.contiguous().view(final_out_overall.shape[0],-1)
