@@ -7,7 +7,15 @@ from sklearn import metrics
 fg = FeatureGetter.fromFile('./test.ini')
 data = fg.getGroupNorms()
 np_data = np.array(data)
-#print(np_data.shape)
+from dlatk.outcomeGetter import OutcomeGetter
+og = OutcomeGetter.fromFile("./output.ini")
+og_vals = og.getGroupAndOutcomeValuesAsDF()
+#data = fg_gns.pivot_table(index = ['group_id'], columns = ['feat'], values = 'group_norm').fillna(0) 
+#print(data.tail())
+#print(og_vals.tail())
+og_vals = og_vals.reset_index()
+np_output_age15 = og_vals.to_numpy()
+print("Age 15 Output :",np_output_age15.shape)
 #print(np_data[:652])
 data_age_3_unique = ["CBQ_EC_Mother_age3","AnyDepressionDuke_PAPA_age3","DSMAnxDxDuke_PAPA_age3","ODDDxDuke2_PAPA_age3","ADHDdx_PAPA_age3","CBCL_DSMAffectiveProblems_Mother_age3","CBCL_DSMAnxietyProblems_Mother_age3","CBCL_DSMAttentionDeficitHyperactivityProblems_Mother_age3","CBCL_DSMOppositionalDefiantProblems_Mother_age3","Incapacity_MO_PAPA_age3"]
 data_age_3_consistent = ["CBQ_NA_Mother_age3","CBQ_ApproachAnticipation_Mother_age3","CBQ_SmilingLaughter_Mother_age3","totalstress.typecount.age3","PSDQ_Factor1_Authoritative_Parent_age3","PSDQ_Factor2_Authoritarian_Parent_age3","PSDQ_Factor3_Permissive_Parent_age3","DyadicAdjust_Parent_Abrev_age3"]
@@ -200,8 +208,8 @@ data_age_12_rnn_unique = np.asfarray(data_age_12_rnn_unique)
 data_age_12_rnn_unique = np.reshape(data_age_12_rnn_unique, (1, data_age_12_rnn_unique.shape[0], data_age_12_rnn_unique.shape[1]))
 print(data_age_12_rnn_unique.shape)
 
-output_age_3 = ["AnyDepression_T2_Imp"]
-#output_age_3 = ["DSMAnxDx_T2"]
+#output_age_3 = ["AnyDepression_T2_Imp"]
+output_age_3 = ["DSMAnxDx_T2"]
 
 for i in range(651):
     group_id.append(data[i][0])
@@ -213,9 +221,9 @@ for i in group_id:
                 l = float(k[2])
     np_data_age3_output.append(l)
 final_data_age3_output = np.array(np_data_age3_output)
-
-output_age_6 = ["LifeTime_Depression_withNOS_age9"]
-#output_age_6 = ["LifeTime_AnyAnxiety_WithoutNOS_age9"]
+print("Age 3 output:", final_data_age3_output.shape)
+#output_age_6 = ["LifeTime_Depression_withNOS_age9"]
+output_age_6 = ["LifeTime_AnyAnxiety_WithoutNOS_age9"]
 np_data_age6_output = []
 for i in group_id:
     for j in output_age_6:
@@ -224,9 +232,9 @@ for i in group_id:
                 l = float(k[2])
     np_data_age6_output.append(l)
 final_data_age6_output = np.array(np_data_age6_output)
-
-output_age_9 = ["AnyDepressiveDisorder_includingNOS_12"]
-#output_age_9 = ["AnyAnxiety12"]
+print("Age 6 output:",final_data_age6_output.shape)
+#output_age_9 = ["AnyDepressiveDisorder_includingNOS_12"]
+output_age_9 = ["AnyAnxiety12"]
 np_data_age9_output = []
 for i in group_id:
     for j in output_age_9:
@@ -235,17 +243,18 @@ for i in group_id:
                 l = float(k[2])
     np_data_age9_output.append(l)
 final_data_age9_output = np.array(np_data_age9_output)
-
-output_age_12 = ["AnyDepressiveDisorder_includingNOS_15"]
+print("Age 9 output: ", final_data_age9_output.shape)
+#output_age_12 = ["AnyDepressiveDisorder_includingNOS_15"]
 np_data_age12_output = []
 for i in group_id:
-    for j in output_age_12:
-        for k in np_data:
-            if str(k[0]) == str(i) and str(k[1]) == str(j):
-                l = float(k[2])
+    for k in np_output_age15:
+        if str(k[0]) == str(i):
+            l = float(k[1])
+            break
     np_data_age12_output.append(l)
 final_data_age12_output = np.array(np_data_age12_output)
-print("Data age 9 output_data : ", final_data_age9_output[:20])
+print("Age 12 output : ", final_data_age12_output.shape)
+#print("Data age 9 output_data : ", final_data_age9_output[:20])
 #final_data_age6_output = np.reshape(final_data_age6_output, (-1,1))
 '''
 print(final_data_age3_output.shape)
@@ -271,7 +280,7 @@ input_data = []
 input_data.append(torch.from_numpy(data_age_3_rnn))
 input_data.append(torch.from_numpy(data_age_6_rnn))
 input_data.append(torch.from_numpy(data_age_9_rnn))
-#input_data.append(torch.from_numpy(data_age_12_rnn))
+input_data.append(torch.from_numpy(data_age_12_rnn))
 
 input_data_age3_unique = torch.from_numpy(data_age_3_rnn_unique)
 input_data_age6_unique = torch.from_numpy(data_age_6_rnn_unique)
@@ -290,7 +299,8 @@ Y = Y.permute((1,0))
 Y = torch.round(Y)
 Y_mean = torch.mean(Y, dim=1)
 Y_mean = Y_mean.reshape([Y_mean.shape[0],1])
-input_data_extend = torch.cat((Y_mean, Y[:,0].reshape([Y.shape[0],1]), Y[:,1].reshape([Y.shape[0],1]), Y[:,2].reshape([Y.shape[0],1])), 1)
+age3_init = torch.zeros_like(Y_mean)
+input_data_extend = torch.cat((age3_init, Y[:,0].reshape([Y.shape[0],1]), Y[:,1].reshape([Y.shape[0],1]), Y[:,2].reshape([Y.shape[0],1])), 1)
 input_data_extend = input_data_extend.reshape([input_data_extend.shape[0],input_data_extend.shape[1],1])
 X_extend = torch.cat((X.float(),input_data_extend.float()),2)
 X_train = X_extend[:585,:,:]
@@ -305,21 +315,89 @@ X_Unique_age12_train = input_data_age12_unique.flatten(0,1)[:585,:]
 X_Unique_age12_test = input_data_age12_unique.flatten(0,1)[-66:,:]
 Y_train = Y[:585,:]
 Y_test = Y[-66:, :]
-model = rnn_model.RNNModel(X_train.shape[2], X_train.shape[1],256, 4, 2, X_train.shape[0])
-model = model.to(device)
-print(model)
+hidden_dim = 256
+num_layers = 2
+model_age6 = rnn_model.RNNModelAge6(X_train.shape[2],hidden_dim, num_layers, X_train.shape[0])
+model_age9 = rnn_model.RNNModelAge9(X_train.shape[2],hidden_dim, num_layers, X_train.shape[0])
+model_age12 = rnn_model.RNNModelAge12(X_train.shape[2],hidden_dim, num_layers, X_train.shape[0])
+model_age15 = rnn_model.RNNModelAge15(X_train.shape[2],hidden_dim, num_layers, X_train.shape[0])
+
+model_age6 = model_age6.to(device)
+model_age9 = model_age9.to(device)
+model_age12 = model_age12.to(device)
+model_age15 = model_age15.to(device)
+#print(model_age6)
 num_epochs = 100
 lr = 0.01
 # Define Loss, Optimizer
 criterion = torch.nn.MSELoss(size_average=False)
-optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+optimizer = torch.optim.Adam(model_age6.parameters(), lr=lr)
+f = open("results.txt","a")
 
 #input_seq = input_.to(device)
 for epoch in range(1, num_epochs + 1):
     optimizer.zero_grad() # Clears existing gradients from previous epoch
     #input_seq = input_seq.to(device)
     #output, hidden = model(X_train.float().cuda(), X_Unique_age3_train.float().cuda(), X_Unique_age6_train.float().cuda(), X_Unique_age9_train.float().cuda(), X_Unique_age12_train.float().cuda())
-    output, hidden = model(X_train.float().cuda(), X_Unique_age3_train.float().cuda(), X_Unique_age6_train.float().cuda(), X_Unique_age9_train.float().cuda())
+    output, hidden = model_age6(X_train.float().cuda(), X_Unique_age3_train.float().cuda())
+    output = output.to(device)
+    #output = output.permute((1,0))
+    #output = output.reshape(output.shape[0])
+    target_seq = Y_train.to(device)
+    target_seq = target_seq.permute((1,0))
+    target_seq = target_seq[:1,:]
+    print("Target Sequence : ", target_seq.shape)
+    target_array = target_seq.cpu().detach().numpy()
+    output_array = output.cpu().detach().numpy()
+    print("Target Array : ",len(target_array[0]), " Output array : ", len(output_array[0]))
+    fpr, tpr, thresholds = metrics.roc_curve(target_array[0], output_array[0])
+    print("AUC :", metrics.auc(fpr, tpr))
+    loss = criterion(output, target_seq.float())
+    loss.backward() # Does backpropagation and calculates gradients
+    optimizer.step() # Updates the weights accordingly
+    
+    if epoch%5 == 0:
+        print('Epoch: {}/{}.............'.format(epoch, num_epochs), end=' ')
+        print("Loss: {:.4f}".format(loss.item()))
+f.write("\n Loss Age 6: {:.4f}".format(loss.item()))
+criterion = torch.nn.MSELoss(size_average=False)
+optimizer = torch.optim.Adam(model_age9.parameters(), lr=lr)
+
+#For Age 9
+for epoch in range(1, num_epochs + 1):
+    optimizer.zero_grad() # Clears existing gradients from previous epoch
+    #input_seq = input_seq.to(device)
+    #output, hidden = model(X_train.float().cuda(), X_Unique_age3_train.float().cuda(), X_Unique_age6_train.float().cuda(), X_Unique_age9_train.float().cuda(), X_Unique_age12_train.float().cuda())
+    output, hidden = model_age9(X_train[:,:2,:].float().cuda(), X_Unique_age3_train.float().cuda(), X_Unique_age6_train.float().cuda())
+    output = output.to(device)
+    #output = output.permute((1,0))
+    #output = output.reshape(output.shape[0])
+    target_seq = Y_train.to(device)
+    target_seq = target_seq.permute((1,0))
+    target_seq = target_seq[:2,:]
+    print("Target Sequence : ", target_seq.shape)
+    target_array = target_seq.cpu().detach().numpy()
+    output_array = output.cpu().detach().numpy()
+    print("Target Array : ",len(target_array[1]), " Output array : ", len(output_array[1]))
+    fpr, tpr, thresholds = metrics.roc_curve(target_array[1], output_array[1])
+    print("AUC :", metrics.auc(fpr, tpr))
+    loss = criterion(output, target_seq.float())
+    loss.backward() # Does backpropagation and calculates gradients
+    optimizer.step() # Updates the weights accordingly
+    
+    if epoch%5 == 0:
+        print('Epoch: {}/{}.............'.format(epoch, num_epochs), end=' ')
+        print("Loss: {:.4f}".format(loss.item()))
+f.write("\n Loss Age 9: {:.4f}".format(loss.item()))
+criterion = torch.nn.MSELoss(size_average=False)
+optimizer = torch.optim.Adam(model_age12.parameters(), lr=lr)
+
+#For Age 12
+for epoch in range(1, num_epochs + 1):
+    optimizer.zero_grad() # Clears existing gradients from previous epoch
+    #input_seq = input_seq.to(device)
+    #output, hidden = model(X_train.float().cuda(), X_Unique_age3_train.float().cuda(), X_Unique_age6_train.float().cuda(), X_Unique_age9_train.float().cuda(), X_Unique_age12_train.float().cuda())
+    output, hidden = model_age12(X_train[:,:3,:].float().cuda(), X_Unique_age3_train.float().cuda(), X_Unique_age6_train.float().cuda(), X_Unique_age9_train.float().cuda())
     output = output.to(device)
     #output = output.permute((1,0))
     #output = output.reshape(output.shape[0])
@@ -331,6 +409,33 @@ for epoch in range(1, num_epochs + 1):
     output_array = output.cpu().detach().numpy()
     print("Target Array : ",len(target_array[2]), " Output array : ", len(output_array[2]))
     fpr, tpr, thresholds = metrics.roc_curve(target_array[2], output_array[2])
+    print("AUC :", metrics.auc(fpr, tpr))
+    loss = criterion(output, target_seq.float())
+    loss.backward() # Does backpropagation and calculates gradients
+    optimizer.step() # Updates the weights accordingly
+    
+    if epoch%5 == 0:
+        print('Epoch: {}/{}.............'.format(epoch, num_epochs), end=' ')
+        print("Loss: {:.4f}".format(loss.item()))
+f.write("\n Loss Age 12: {:.4f}".format(loss.item()))
+
+#For Age 15
+for epoch in range(1, num_epochs + 1):
+    optimizer.zero_grad() # Clears existing gradients from previous epoch
+    #input_seq = input_seq.to(device)
+    #output, hidden = model(X_train.float().cuda(), X_Unique_age3_train.float().cuda(), X_Unique_age6_train.float().cuda(), X_Unique_age9_train.float().cuda(), X_Unique_age12_train.float().cuda())
+    output, hidden = model_age15(X_train.float().cuda(), X_Unique_age3_train.float().cuda(), X_Unique_age6_train.float().cuda(), X_Unique_age9_train.float().cuda(),X_Unique_age12_train.float())
+    output = output.to(device)
+    #output = output.permute((1,0))
+    #output = output.reshape(output.shape[0])
+    target_seq = Y_train.to(device)
+    target_seq = target_seq.permute((1,0))
+    #target_seq = target_seq[:3,:]
+    print("Target Sequence : ", target_seq.shape)
+    target_array = target_seq.cpu().detach().numpy()
+    output_array = output.cpu().detach().numpy()
+    print("Target Array : ",len(target_array[2]), " Output array : ", len(output_array[2]))
+    fpr, tpr, thresholds = metrics.roc_curve(target_array[3], output_array[3])
     print("AUC :", metrics.auc(fpr, tpr))
     loss = criterion(output, target_seq.float())
     loss.backward() # Does backpropagation and calculates gradients
